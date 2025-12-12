@@ -36,15 +36,21 @@ async function detectNgrok() {
 }
 
 let adapter;
+
 if (process.env.LOWDB_ADAPTER === 'vercel-kv') {
-  const { VercelKV } = require('@vercel/kv');
+  const { createClient } = require('@vercel/kv');
+  const kv = createClient({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  });
+
   adapter = {
     read: async () => {
-      const data = await VercelKV.get('db');
+      const data = await kv.get('toiletbowl-db');
       return data || { tokens: null, lastRefresh: 0 };
     },
     write: async (data) => {
-      await VercelKV.set('db', data);
+      await kv.set('toiletbowl-db', data);
     }
   };
 } else {
