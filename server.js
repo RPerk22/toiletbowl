@@ -37,20 +37,26 @@ async function detectNgrok() {
 
 let adapter;
 
-if (process.env.LOWDB_ADAPTER === 'vercel-kv') {
-  const { createClient } = require('@vercel/kv');
-  const kv = createClient({
-    url: process.env.KV_REST_API_URL,
-    token: process.env.KV_REST_API_TOKEN,
+if (process.env.KV_REDIS_URL) {
+  const { createClient } = require('redis');
+  const client = createClient({
+    url: process.env.KV_REDIS_URL || process.env.KV_URL
   });
+
+  client.on('error', err => console.log('Redis Client Error', err));
+
+  // Connect once at startup
+  (async () => {
+    await client.connect();
+  })();
 
   adapter = {
     read: async () => {
-      const data = await kv.get('toiletbowl-db');
-      return data || { tokens: null, lastRefresh: 0 };
+      const data = await client.get('toiletbowl-db');
+      return data ? JSON.parse(data) : { tokens: null, lastRefresh: 0 };
     },
     write: async (data) => {
-      await kv.set('toiletbowl-db', data);
+      await client.set('toiletbowl-db', JSON.stringify(data));
     }
   };
 } else {
