@@ -35,7 +35,23 @@ async function detectNgrok() {
   }
 }
 
-const adapter = new FileSync('db.json');
+let adapter;
+if (process.env.LOWDB_ADAPTER === 'vercel-kv') {
+  const { VercelKV } = require('@vercel/kv');
+  adapter = {
+    read: async () => {
+      const data = await VercelKV.get('db');
+      return data || { tokens: null, lastRefresh: 0 };
+    },
+    write: async (data) => {
+      await VercelKV.set('db', data);
+    }
+  };
+} else {
+  const FileSync = require('lowdb/adapters/FileSync');
+  adapter = new FileSync('db.json');
+}
+
 const db = low(adapter);
 db.defaults({ tokens: null, lastRefresh: 0 }).write();
 
