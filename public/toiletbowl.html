@@ -157,6 +157,26 @@
   <img src="assets/logo.jpg" class="logo" alt="Toilet Bowl Trophy">
   <h1>TOILET BOWL 2025</h1>
   <div style="font-size:4rem;margin:20px">💩🚽🧻</div>
+  <div style="margin:20px 0">
+    <select id="yearSelect" style="padding:10px 20px;font-size:1.2rem;border-radius:10px;background:var(--card);color:var(--text);border:2px solid var(--primary)">
+      <option value="2025">2025</option>
+      <option value="2024">2024</option>
+      <option value="2023">2023</option>
+      <option value="2022">2022</option>
+      <option value="2021">2021</option>
+      <option value="2020">2020</option>
+      <option value="2019">2019</option>
+      <option value="2018">2018</option>
+      <option value="2017">2017</option>
+      <option value="2016">2016</option>
+      <option value="2015">2015</option>
+      <option value="2014">2014</option>
+      <option value="2013">2013</option>
+      <option value="2012">2012</option>
+      <option value="2011">2011</option>
+      <option value="2010">2010</option>
+    </select>
+  </div>
 </div>
 
 <div id="auth" style="text-align:center;padding:60px">
@@ -172,19 +192,38 @@
     <div class="total-team" id="totalB"></div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" data-week="15">Week 15</div>
-    <div class="tab" data-week="16">Week 16</div>
-    <div class="tab" data-week="17">Week 17</div>
+  <div class="tabs" id="tabsContainer">
+    <!-- Tabs will be dynamically generated -->
   </div>
 
-  <div id="week15" class="week-content active"></div>
-  <div id="week16" class="week-content"></div>
-  <div id="week17" class="week-content"></div>
+  <div id="weekContentContainer">
+    <!-- Week content containers will be dynamically generated -->
+  </div>
 </div>
 
 <script>
-  const LEAGUE_KEY = "461.l.773315";
+  const yearToLeagueKey = {
+    "2010": "242.l.567621", 
+    "2011": "257.l.455961", 
+    "2012": "273.l.131911", 
+    "2013": "314.l.506319", 
+    "2014": "331.l.295948", 
+    "2015": "348.l.130000", 
+    "2016": "359.l.173112", 
+    "2017": "371.l.535619", 
+    "2018": "380.l.1003644", 
+    "2019": "390.l.503579", 
+    "2020": "399.l.403068", 
+    "2021": "406.l.748662", 
+    "2022": "414.l.501368", 
+    "2023": "423.l.340798", 
+    "2024": "449.l.812034", 
+    "2025": "461.l.773315"
+  };
+
+  let currentYear = Object.keys(yearToLeagueKey).slice(-1)[0]; // Default to latest year
+  let LEAGUE_KEY = yearToLeagueKey[currentYear];
+  let isCurrentYear = true; // Track if viewing current year for auto-refresh
 
   let popup = null;
   let currentWeek = 15;
@@ -217,18 +256,66 @@
   return "https://s.yimg.com/lq/i/us/sp/v/nfl_cutout/players_l/default.png";
 }
 
+  function generateTabsAndContainers(finalWeek) {
+    const toiletBowlWeeks = [finalWeek - 2, finalWeek - 1, finalWeek];
+    
+    // Clear existing tabs and containers
+    const tabsContainer = document.getElementById('tabsContainer');
+    const weekContentContainer = document.getElementById('weekContentContainer');
+    tabsContainer.innerHTML = '';
+    weekContentContainer.innerHTML = '';
+    
+    // Generate tabs
+    toiletBowlWeeks.forEach((week, index) => {
+      const tab = document.createElement('div');
+      tab.className = 'tab' + (index === 0 ? ' active' : '');
+      tab.setAttribute('data-week', week);
+      tab.textContent = `Week ${week}`;
+      tabsContainer.appendChild(tab);
+      
+      // Generate week content container
+      const weekContent = document.createElement('div');
+      weekContent.id = `week${week}`;
+      weekContent.className = 'week-content' + (index === 0 ? ' active' : '');
+      weekContentContainer.appendChild(weekContent);
+    });
+    
+    // Re-attach tab click handlers
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.tab,.week-content').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        const week = tab.dataset.week;
+        document.getElementById('week' + week).classList.add('active');
+        localStorage.setItem('toiletBowlWeek', week);
+      };
+    });
+    
+    return toiletBowlWeeks;
+  }
+
   async function loadToiletBowl() {
     try {
       // Get current week from Yahoo
       const leagueInfo = await yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/league/${LEAGUE_KEY}/settings`);
       const yahooCurrentWeek = parseInt(leagueInfo.fantasy_content.league[0].current_week);
-      if (yahooCurrentWeek >= 15 && yahooCurrentWeek <= 17) {
+      const finalWeek = parseInt(leagueInfo.fantasy_content.league[0].end_week);
+      
+      // Generate tabs and containers based on finalWeek
+      const toiletBowlWeeks = generateTabsAndContainers(finalWeek);
+      
+      // Set current week to the latest available toilet bowl week
+      if (toiletBowlWeeks.includes(yahooCurrentWeek)) {
         currentWeek = yahooCurrentWeek;
+      } else if (yahooCurrentWeek > toiletBowlWeeks[toiletBowlWeeks.length - 1]) {
+        currentWeek = toiletBowlWeeks[toiletBowlWeeks.length - 1]; // Last toilet bowl week
+      } else {
+        currentWeek = toiletBowlWeeks[0]; // First toilet bowl week
       }
 
       // Check if user previously selected a week (from localStorage)
       const savedWeek = localStorage.getItem('toiletBowlWeek');
-      if (savedWeek && [15, 16, 17].includes(parseInt(savedWeek))) {
+      if (savedWeek && toiletBowlWeeks.includes(parseInt(savedWeek))) {
         currentWeek = parseInt(savedWeek);
       }
 
@@ -242,24 +329,31 @@
       const standings = await yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/league/${LEAGUE_KEY}/standings`);
       const teamsObj = standings.fantasy_content.league[1].standings[0].teams;
 
+      // Get # of Teams
+      const numTeams = parseInt(standings.fantasy_content.league[0].num_teams);
+
+      // TB teams indexes are last two in standings
+      tb_indexA = numTeams - 2;
+      tb_indexB = numTeams - 1;
+
       const teamList = Object.keys(teamsObj)
         .filter(k => k !== 'count')
         .map(k => teamsObj[k].team[0]);
 
       const loserA = { 
-        name: teamList[14][2].name, 
-        key: teamList[14][0].team_key,
-        logo: teamList[14][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
+        name: teamList[tb_indexA][2].name, 
+        key: teamList[tb_indexA][0].team_key,
+        logo: teamList[tb_indexA][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
       const loserB = { 
-        name: teamList[15][2].name, 
-        key: teamList[15][0].team_key,
-        logo: teamList[15][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
+        name: teamList[tb_indexB][2].name, 
+        key: teamList[tb_indexB][0].team_key,
+        logo: teamList[tb_indexB][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
 
       const totals = { A: 0, B: 0 };
 
-      for (const week of [15, 16, 17]) {
+      for (const week of toiletBowlWeeks) {
         const container = document.getElementById(`week${week}`);
         container.innerHTML = '<p>Loading...</p>';
 
@@ -403,7 +497,29 @@
     } catch (e) {}
   }
   init();
-  setInterval(() => document.getElementById('main').style.display !== 'none' && loadToiletBowl(), 30000);
+  setInterval(() => {
+    if (document.getElementById('main').style.display !== 'none' && isCurrentYear) {
+      loadToiletBowl();
+    }
+  }, 45000);
+
+  // Year selection handler
+  document.getElementById('yearSelect').addEventListener('change', function() {
+    currentYear = this.value;
+    LEAGUE_KEY = yearToLeagueKey[currentYear];
+    isCurrentYear = currentYear === "2025"; // Only auto-refresh for current year
+    // Update the title
+    document.querySelector('h1').textContent = `TOILET BOWL ${currentYear}`;
+    // Clear saved week since weeks change by year
+    localStorage.removeItem('toiletBowlWeek');
+    // Reload data if user is logged in
+    if (document.getElementById('main').style.display !== 'none') {
+      loadToiletBowl();
+    }
+  });
+
+  // Set initial year in dropdown
+  document.getElementById('yearSelect').value = currentYear;
 </script>
 </body>
 </html>
