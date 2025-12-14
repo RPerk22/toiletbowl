@@ -377,7 +377,7 @@
               .forEach(k => {
                 const player = players[k].player;
                 const player_key = player[0][0].player_key;
-                const points = parseFloat(player?.[1]?.player_points?.total || 0);
+                const points = parseFloat(player?.[1]?.player_points?.total || -69);
                 map[player_key] = points;
               });
             return map;
