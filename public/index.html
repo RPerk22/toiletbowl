@@ -438,7 +438,7 @@
             const name = p[0][2].name?.full || '??';
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
-            const pts = (pointsMapA[playerKey] || 0).toFixed(1);
+            const pts = (pointsMapA[playerKey] || 0).toFixed(2);
 
             html += `
               <tr>
@@ -465,7 +465,7 @@
             const name = p[0][2].name?.full || '??';
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
-            const pts = (pointsMapB[playerKey] || 0).toFixed(1);
+            const pts = (pointsMapB[playerKey] || 0).toFixed(2);
 
             html += `
               <tr>
