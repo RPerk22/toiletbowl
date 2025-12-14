@@ -343,11 +343,13 @@
       const loserA = { 
         name: teamList[tb_indexA][2].name, 
         key: teamList[tb_indexA][0].team_key,
+        nickname: teamList[tb_indexA][23]?.managers?.[0]?.manager?.nickname || "Unknown",
         logo: teamList[tb_indexA][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
       const loserB = { 
         name: teamList[tb_indexB][2].name, 
         key: teamList[tb_indexB][0].team_key,
+        nickname: teamList[tb_indexB][23]?.managers?.[0]?.manager?.nickname || "Unknown",
         logo: teamList[tb_indexB][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
 
@@ -414,10 +416,10 @@
           // Update running total
           document.getElementById('totalA').innerHTML = `
             <img src="${loserA.logo}" width="60" height="60">
-            <div><div style="font-size:2rem">${loserA.name}</div><div style="font-size:3rem;color:#ff6666">${totals.A.toFixed(2)}</div></div>`;
+            <div><div style="font-size:2rem">${loserA.nickname}</div><div style="font-size:3rem;color:#ff6666">${totals.A.toFixed(2)}</div></div>`;
           document.getElementById('totalB').innerHTML = `
             <img src="${loserB.logo}" width="60" height="60">
-            <div><div style="font-size:2rem">${loserB.name}</div><div style="font-size:3rem;color:#ff6666">${totals.B.toFixed(2)}</div></div>`;
+            <div><div style="font-size:2rem">${loserB.nickname}</div><div style="font-size:3rem;color:#ff6666">${totals.B.toFixed(2)}</div></div>`;
 
           let html = '<div class="matchup">';
 
