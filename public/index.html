@@ -343,13 +343,11 @@
       const loserA = { 
         name: teamList[tb_indexA][2].name, 
         key: teamList[tb_indexA][0].team_key,
-        nickname: teamList[tb_indexA][23].managers?.[0]?.manager?.nickname,
         logo: teamList[tb_indexA][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
       const loserB = { 
         name: teamList[tb_indexB][2].name, 
         key: teamList[tb_indexB][0].team_key,
-        nickname: teamList[tb_indexB][23].managers?.[0]?.manager?.nickname,
         logo: teamList[tb_indexB][5].team_logos?.[0]?.team_logo?.url || "https://s.yimg.com/lq/i/us/sp/v/nfl/teams/1/50x50w/unknown.gif"
       };
 
@@ -360,17 +358,38 @@
         container.innerHTML = '<p>Loading...</p>';
 
         try {
-          const [rosterA, playersA, rosterB, playersB] = await Promise.all([
+          const [rosterA, rosterB] = await Promise.all([
             yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/team/${loserA.key}/roster;week=${week}`),
-            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/team/${loserA.key}/players/stats;type=week;week=${week}`),
-            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/team/${loserB.key}/roster;week=${week}`),
-            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/team/${loserB.key}/players/stats;type=week;week=${week}`)
+            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/team/${loserB.key}/roster;week=${week}`)
+          ]);
+
+          // Get starters
+          const getStarters = (roster) => {
+            const playersObj = roster?.fantasy_content?.team?.[1]?.roster?.["0"]?.players;
+            if (!playersObj) return [];
+            return Object.keys(playersObj)
+              .filter(k => k !== 'count')
+              .map(k => playersObj[k].player)
+              .filter(p => p[1].selected_position?.[1]?.position !== 'BN' && p[1].selected_position?.[1]?.position !== 'IR');
+          };
+
+          const startersA = getStarters(rosterA);
+          const startersB = getStarters(rosterB);
+
+          // Extract player keys from starters
+          const playerKeysA = startersA.map(p => p[0][0].player_key).join(',');
+          const playerKeysB = startersB.map(p => p[0][0].player_key).join(',');
+
+          // Fetch player stats using player keys
+          const [playersA, playersB] = await Promise.all([
+            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/league/${LEAGUE_KEY}/players;player_keys=${playerKeysA}/stats;type=week;week=${week}`),
+            yahooFetch(`https://fantasysports.yahooapis.com/fantasy/v2/league/${LEAGUE_KEY}/players;player_keys=${playerKeysB}/stats;type=week;week=${week}`)
           ]);
 
           // Build points map
           const buildPointsMap = (playersData) => {
             const map = {};
-            const players = playersData?.fantasy_content?.team?.[1]?.players;
+            const players = playersData?.fantasy_content?.league?.[1]?.players;
             if (!players) return map;
             Object.keys(players)
               .filter(k => k !== 'count')
@@ -386,19 +405,6 @@
           const pointsMapA = buildPointsMap(playersA);
           const pointsMapB = buildPointsMap(playersB);
 
-          // Get starters
-          const getStarters = (roster) => {
-            const playersObj = roster?.fantasy_content?.team?.[1]?.roster?.["0"]?.players;
-            if (!playersObj) return [];
-            return Object.keys(playersObj)
-              .filter(k => k !== 'count')
-              .map(k => playersObj[k].player)
-              .filter(p => p[1].selected_position?.[1]?.position !== 'BN' && p[1].selected_position?.[1]?.position !== 'IR');
-          };
-
-          const startersA = getStarters(rosterA);
-          const startersB = getStarters(rosterB);
-
           const pointsA = startersA.reduce((s, p) => s + (pointsMapA[p[0][0].player_key] || 0), 0);
           const pointsB = startersB.reduce((s, p) => s + (pointsMapB[p[0][0].player_key] || 0), 0);
 
@@ -408,10 +414,10 @@
           // Update running total
           document.getElementById('totalA').innerHTML = `
             <img src="${loserA.logo}" width="60" height="60">
-            <div><div style="font-size:2rem">${loserA.nickname}</div><div style="font-size:3rem;color:#ff6666">${totals.A.toFixed(2)}</div></div>`;
+            <div><div style="font-size:2rem">${loserA.name}</div><div style="font-size:3rem;color:#ff6666">${totals.A.toFixed(2)}</div></div>`;
           document.getElementById('totalB').innerHTML = `
             <img src="${loserB.logo}" width="60" height="60">
-            <div><div style="font-size:2rem">${loserB.nickname}</div><div style="font-size:3rem;color:#ff6666">${totals.B.toFixed(2)}</div></div>`;
+            <div><div style="font-size:2rem">${loserB.name}</div><div style="font-size:3rem;color:#ff6666">${totals.B.toFixed(2)}</div></div>`;
 
           let html = '<div class="matchup">';
 
