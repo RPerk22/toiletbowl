@@ -428,7 +428,10 @@
             <div class="team">
               <div class="team-header">
                 <img src="${loserA.logo}" width="80" height="80">
-                <h3>${loserA.name}</h3>
+                <div>
+                  <h3 style="margin-bottom:4px">${loserA.name}</h3>
+                  <div style="font-size:0.85rem;color:#999;text-align:center">Week ${week}</div>
+                </div>
               </div>
               <div class="score">${pointsA.toFixed(2)}</div>
               <table><thead><tr><th></th><th>Player</th><th>Pos</th><th>Pts</th></tr></thead><tbody>`;
@@ -439,12 +442,14 @@
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
             const pts = (pointsMapA[playerKey] || 0).toFixed(2);
+            const teamName = p[0][6]?.editorial_team_full_name || '';
+            const displayPos = p[0][9]?.display_position || pos;
 
             html += `
               <tr>
                 <td><img src="${headshot}" width="40" height="40"></td>
-                <td>${name}</td>
-                <td>${pos}</td>
+                <td>${name}${teamName ? `<div style="font-size:0.75rem;color:#999;margin-top:2px">${teamName}</div>` : ''}</td>
+                <td>${displayPos}</td>
                 <td><strong>${pts}</strong></td>
               </tr>`;
           });
@@ -455,7 +460,10 @@
             <div class="team">
               <div class="team-header">
                 <img src="${loserB.logo}" width="80" height="80">
-                <h3>${loserB.name}</h3>
+                <div>
+                  <h3 style="margin-bottom:4px">${loserB.name}</h3>
+                  <div style="font-size:0.85rem;color:#999;text-align:center">Week ${week}</div>
+                </div>
               </div>
               <div class="score">${pointsB.toFixed(2)}</div>
               <table><thead><tr><th></th><th>Player</th><th>Pos</th><th>Pts</th></tr></thead><tbody>`;
@@ -466,12 +474,14 @@
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
             const pts = (pointsMapB[playerKey] || 0).toFixed(2);
+            const teamName = p[0][6]?.editorial_team_full_name || '';
+            const displayPos = p[0][9]?.display_position || pos;
 
             html += `
               <tr>
                 <td><img src="${headshot}" width="40" height="40"></td>
-                <td>${name}</td>
-                <td>${pos}</td>
+                <td>${name}${teamName ? `<div style="font-size:0.75rem;color:#999;margin-top:2px">${teamName}</div>` : ''}</td>
+                <td>${displayPos}</td>
                 <td><strong>${pts}</strong></td>
               </tr>`;
           });
