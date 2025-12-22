@@ -442,8 +442,8 @@
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
             const pts = (pointsMapA[playerKey] || 0).toFixed(2);
-            const teamName = p[0][6]?.editorial_team_full_name || '';
-            const displayPos = p[0][9]?.display_position || pos;
+            const teamName = p[0].find(item => item?.editorial_team_full_name)?.editorial_team_full_name || '';
+            const displayPos = p[0].find(item => item?.display_position)?.display_position || pos;
 
             html += `
               <tr>
@@ -474,8 +474,8 @@
             const headshot = getPlayerHeadshot(p[0]);
             const pos = p[1].selected_position[1].position;
             const pts = (pointsMapB[playerKey] || 0).toFixed(2);
-            const teamName = p[0][6]?.editorial_team_full_name || '';
-            const displayPos = p[0][9]?.display_position || pos;
+            const teamName = p[0].find(item => item?.editorial_team_full_name)?.editorial_team_full_name || '';
+            const displayPos = p[0].find(item => item?.display_position)?.display_position || pos;
 
             html += `
               <tr>
